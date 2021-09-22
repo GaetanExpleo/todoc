@@ -12,5 +12,5 @@ import java.util.List;
 public interface ProjectDao {
 
     @Query("SELECT * FROM Task WHERE id = :projectId")
-    LiveData<List<Project>> getTasks(long projectId);
+    LiveData<Project> getProject(long projectId);
 }
