@@ -15,13 +15,13 @@ public class TaskRepository {
         mTaskDao = taskDao;
     }
 
-    public LiveData<List<Task>> getTaskDao(long projectId) {
-        return mTaskDao.getTasks(projectId);
+    public LiveData<List<Task>> getTasks() {
+        return mTaskDao.getTasks();
     }
 
     public void createTask(Task task) {mTaskDao.insertTask(task);}
 
     public void updateTask(Task task) {mTaskDao.updateTask(task);}
 
-    public void deleteTask(long projectId){mTaskDao.deleteTask(projectId);}
+    public void deleteTask(Task task){mTaskDao.deleteTask(task);}
 }
