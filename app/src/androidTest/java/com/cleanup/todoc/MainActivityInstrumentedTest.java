@@ -3,16 +3,25 @@ package com.cleanup.todoc;
 import android.view.View;
 import android.widget.TextView;
 
+import androidx.arch.core.executor.testing.InstantTaskExecutorRule;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.room.Room;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 
+import com.cleanup.todoc.database.TodocDatabase;
+import com.cleanup.todoc.model.Task;
 import com.cleanup.todoc.ui.MainActivity;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.Date;
+import java.util.List;
 
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
@@ -23,6 +32,7 @@ import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static com.cleanup.todoc.TestUtils.withRecyclerView;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Instrumented test, which will execute on an Android device.
@@ -32,11 +42,26 @@ import static org.junit.Assert.assertThat;
  */
 @RunWith(AndroidJUnit4.class)
 public class MainActivityInstrumentedTest {
+    
+    private TodocDatabase mDatabase;
+
+    private static final long PROJECT_ID = 1;
+    private static final Task TASK_DEMO = new Task(PROJECT_ID, "Tâche exemple", new Date().getTime());
+    
     @Rule
+//    public InstantTaskExecutorRule instantTaskExecutorRule = new InstantTaskExecutorRule();
     public ActivityTestRule<MainActivity> rule = new ActivityTestRule<>(MainActivity.class);
 
-    @Before
-    //TODO : delete database
+//    @Before
+//    public void createDb() throws Exception {
+//        mDatabase = Room
+//                .inMemoryDatabaseBuilder(InstrumentationRegistry.getInstrumentation().getContext(), TodocDatabase.class)
+//                .allowMainThreadQueries()
+//                .build();
+//    }
+//
+//    @After
+//    public void closeDb() throws Exception {mDatabase.close();}
 
     @Test
     public void addAndRemoveTask() {
@@ -123,5 +148,13 @@ public class MainActivityInstrumentedTest {
                 .check(matches(withText("zzz Tâche example")));
         onView(withRecyclerView(R.id.list_tasks).atPositionOnView(2, R.id.lbl_task_name))
                 .check(matches(withText("aaa Tâche example")));
+    }
+
+    @Test
+    public void insertAndGetTask() throws InterruptedException {
+        mDatabase.mTaskDao().insertTask(TASK_DEMO);
+
+        List<Task> tasks = LiveDataTestUtils.getOrAwaitValue(mDatabase.mTaskDao().getTasks());
+        assertTrue(tasks.size() == 1);
     }
 }
