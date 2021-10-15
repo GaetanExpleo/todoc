@@ -1,19 +1,30 @@
 package com.cleanup.todoc;
 
+import android.content.Context;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.widget.TextView;
 
-import androidx.arch.core.executor.testing.InstantTaskExecutorRule;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.room.Room;
+import androidx.test.core.app.ActivityScenario;
+import androidx.test.core.app.ApplicationProvider;
+import androidx.test.espresso.contrib.RecyclerViewActions;
+import androidx.test.espresso.matcher.RootMatchers;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 
 import com.cleanup.todoc.database.TodocDatabase;
+import com.cleanup.todoc.database.dao.TaskDao;
+import com.cleanup.todoc.model.Project;
 import com.cleanup.todoc.model.Task;
 import com.cleanup.todoc.ui.MainActivity;
+import com.cleanup.todoc.utils.DeleteViewAction;
 
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.hamcrest.TypeSafeMatcher;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -21,18 +32,22 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Date;
-import java.util.List;
 
+import static androidx.test.espresso.Espresso.onData;
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.action.ViewActions.replaceText;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
+import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
+import static androidx.test.espresso.matcher.ViewMatchers.withClassName;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static com.cleanup.todoc.TestUtils.withRecyclerView;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.anything;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Instrumented test, which will execute on an Android device.
@@ -42,36 +57,31 @@ import static org.junit.Assert.assertTrue;
  */
 @RunWith(AndroidJUnit4.class)
 public class MainActivityInstrumentedTest {
-    
-    private TodocDatabase mDatabase;
+
+    private ActivityScenario<MainActivity> mActivityScenario;
 
     private static final long PROJECT_ID = 1;
-    private static final Task TASK_DEMO = new Task(PROJECT_ID, "Tâche exemple", new Date().getTime());
     
     @Rule
-//    public InstantTaskExecutorRule instantTaskExecutorRule = new InstantTaskExecutorRule();
     public ActivityTestRule<MainActivity> rule = new ActivityTestRule<>(MainActivity.class);
 
-//    @Before
-//    public void createDb() throws Exception {
-//        mDatabase = Room
-//                .inMemoryDatabaseBuilder(InstrumentationRegistry.getInstrumentation().getContext(), TodocDatabase.class)
-//                .allowMainThreadQueries()
-//                .build();
-//    }
-//
-//    @After
-//    public void closeDb() throws Exception {mDatabase.close();}
+    @Before
+    public void setUp(){
+        mActivityScenario = ActivityScenario.launch(MainActivity.class);
+    }
+
+    @After
+    public void tearDown(){
+        mActivityScenario.close();
+    }
 
     @Test
-    public void addAndRemoveTask() {
+    public void addAndRemoveTask() throws InterruptedException {
         MainActivity activity = rule.getActivity();
         TextView lblNoTask = activity.findViewById(R.id.lbl_no_task);
         RecyclerView listTasks = activity.findViewById(R.id.list_tasks);
 
-        onView(withId(R.id.fab_add_task)).perform(click());
-        onView(withId(R.id.txt_task_name)).perform(replaceText("Tâche example"));
-        onView(withId(android.R.id.button1)).perform(click());
+        createTask("Tâche example", 0);
 
         // Check that lblTask is not displayed anymore
         assertThat(lblNoTask.getVisibility(), equalTo(View.GONE));
@@ -89,18 +99,13 @@ public class MainActivityInstrumentedTest {
     }
 
     @Test
-    public void sortTasks() {
-        MainActivity activity = rule.getActivity();
+    public void sortTasks() throws InterruptedException {
+//        MainActivity activity = rule.getActivity();
 
-        onView(withId(R.id.fab_add_task)).perform(click());
-        onView(withId(R.id.txt_task_name)).perform(replaceText("aaa Tâche example"));
-        onView(withId(android.R.id.button1)).perform(click());
-        onView(withId(R.id.fab_add_task)).perform(click());
-        onView(withId(R.id.txt_task_name)).perform(replaceText("zzz Tâche example"));
-        onView(withId(android.R.id.button1)).perform(click());
-        onView(withId(R.id.fab_add_task)).perform(click());
-        onView(withId(R.id.txt_task_name)).perform(replaceText("hhh Tâche example"));
-        onView(withId(android.R.id.button1)).perform(click());
+        createTask("aaa Tâche example", 0);
+        createTask("zzz Tâche example", 1);
+        createTask("hhh Tâche example", 2);
+        createTask("yyy Tâche example", 0);
 
         onView(withRecyclerView(R.id.list_tasks).atPositionOnView(0, R.id.lbl_task_name))
                 .check(matches(withText("aaa Tâche example")));
@@ -108,6 +113,8 @@ public class MainActivityInstrumentedTest {
                 .check(matches(withText("zzz Tâche example")));
         onView(withRecyclerView(R.id.list_tasks).atPositionOnView(2, R.id.lbl_task_name))
                 .check(matches(withText("hhh Tâche example")));
+        onView(withRecyclerView(R.id.list_tasks).atPositionOnView(3, R.id.lbl_task_name))
+                .check(matches(withText("yyy Tâche example")));
 
         // Sort alphabetical
         onView(withId(R.id.action_filter)).perform(click());
@@ -117,6 +124,8 @@ public class MainActivityInstrumentedTest {
         onView(withRecyclerView(R.id.list_tasks).atPositionOnView(1, R.id.lbl_task_name))
                 .check(matches(withText("hhh Tâche example")));
         onView(withRecyclerView(R.id.list_tasks).atPositionOnView(2, R.id.lbl_task_name))
+                .check(matches(withText("yyy Tâche example")));
+        onView(withRecyclerView(R.id.list_tasks).atPositionOnView(3, R.id.lbl_task_name))
                 .check(matches(withText("zzz Tâche example")));
 
         // Sort alphabetical inverted
@@ -125,8 +134,10 @@ public class MainActivityInstrumentedTest {
         onView(withRecyclerView(R.id.list_tasks).atPositionOnView(0, R.id.lbl_task_name))
                 .check(matches(withText("zzz Tâche example")));
         onView(withRecyclerView(R.id.list_tasks).atPositionOnView(1, R.id.lbl_task_name))
-                .check(matches(withText("hhh Tâche example")));
+                .check(matches(withText("yyy Tâche example")));
         onView(withRecyclerView(R.id.list_tasks).atPositionOnView(2, R.id.lbl_task_name))
+                .check(matches(withText("hhh Tâche example")));
+        onView(withRecyclerView(R.id.list_tasks).atPositionOnView(3, R.id.lbl_task_name))
                 .check(matches(withText("aaa Tâche example")));
 
         // Sort old first
@@ -138,23 +149,80 @@ public class MainActivityInstrumentedTest {
                 .check(matches(withText("zzz Tâche example")));
         onView(withRecyclerView(R.id.list_tasks).atPositionOnView(2, R.id.lbl_task_name))
                 .check(matches(withText("hhh Tâche example")));
+        onView(withRecyclerView(R.id.list_tasks).atPositionOnView(3, R.id.lbl_task_name))
+                .check(matches(withText("yyy Tâche example")));
 
         // Sort recent first
         onView(withId(R.id.action_filter)).perform(click());
         onView(withText(R.string.sort_recent_first)).perform(click());
         onView(withRecyclerView(R.id.list_tasks).atPositionOnView(0, R.id.lbl_task_name))
-                .check(matches(withText("hhh Tâche example")));
+                .check(matches(withText("yyy Tâche example")));
         onView(withRecyclerView(R.id.list_tasks).atPositionOnView(1, R.id.lbl_task_name))
-                .check(matches(withText("zzz Tâche example")));
+                .check(matches(withText("hhh Tâche example")));
         onView(withRecyclerView(R.id.list_tasks).atPositionOnView(2, R.id.lbl_task_name))
+                .check(matches(withText("zzz Tâche example")));
+        onView(withRecyclerView(R.id.list_tasks).atPositionOnView(3, R.id.lbl_task_name))
                 .check(matches(withText("aaa Tâche example")));
+
+        // Sort by project
+        onView(withId(R.id.action_filter)).perform(click());
+        onView(withText(R.string.sort_project)).perform(click());
+        onView(withRecyclerView(R.id.list_tasks).atPositionOnView(0, R.id.lbl_task_name))
+                .check(matches(withText("yyy Tâche example")));
+        onView(withRecyclerView(R.id.list_tasks).atPositionOnView(1, R.id.lbl_task_name))
+                .check(matches(withText("aaa Tâche example")));
+        onView(withRecyclerView(R.id.list_tasks).atPositionOnView(2, R.id.lbl_task_name))
+                .check(matches(withText("zzz Tâche example")));
+        onView(withRecyclerView(R.id.list_tasks).atPositionOnView(3, R.id.lbl_task_name))
+                .check(matches(withText("hhh Tâche example")));
+
+        deleteTask(4);
     }
 
-    @Test
-    public void insertAndGetTask() throws InterruptedException {
-        mDatabase.mTaskDao().insertTask(TASK_DEMO);
+    private void createTask(String nameTask, int projectId) throws InterruptedException {
+        onView(withId(R.id.fab_add_task)).perform(click());
+        onView(withId(R.id.txt_task_name)).perform(replaceText(nameTask));
+        onView(allOf(withId(R.id.project_spinner),
+            childAtPosition(
+                    childAtPosition(
+                            withId(R.id.custom),
+                            0),
+                    1),
+            isDisplayed())).perform(click());
+        onData(anything())
+                .inAdapterView(childAtPosition(
+                        withClassName(is("android.widget.PopupWindow$PopupBackgroundView")),
+                        0))
+                .atPosition(projectId)
+                .inRoot(RootMatchers.isPlatformPopup())
+                .perform(click());
+        Thread.sleep(500);
+        onView(withId(android.R.id.button1)).perform(click());
+    }
 
-        List<Task> tasks = LiveDataTestUtils.getOrAwaitValue(mDatabase.mTaskDao().getTasks());
-        assertTrue(tasks.size() == 1);
+
+    private void deleteTask(int i) {
+        for (int j = 1; j <= i; j++) {
+            onView(withId(R.id.list_tasks)).perform(RecyclerViewActions.actionOnItemAtPosition(0,new DeleteViewAction()));
+        }
+    }
+
+    private static Matcher<View> childAtPosition(
+            final Matcher<View> parentMatcher, final int position) {
+
+        return new TypeSafeMatcher<View>() {
+            @Override
+            public void describeTo(Description description) {
+                description.appendText("Child at position " + position + " in parent ");
+                parentMatcher.describeTo(description);
+            }
+
+            @Override
+            public boolean matchesSafely(View view) {
+                ViewParent parent = view.getParent();
+                return parent instanceof ViewGroup && parentMatcher.matches(parent)
+                        && view.equals(((ViewGroup) parent).getChildAt(position));
+            }
+        };
     }
 }

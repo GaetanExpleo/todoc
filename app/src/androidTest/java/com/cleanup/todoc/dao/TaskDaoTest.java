@@ -17,14 +17,24 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 import static com.cleanup.todoc.dao.dataDaoTest.*;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(AndroidJUnit4.class)
 public class TaskDaoTest {
 
+    private static final int FIRST_POSITION = 0;
+    private static final int SECOND_POSITION = 1;
+    private static final int THIRD_POSITION = 2;
+    private static final int FORTH_POSITION = 3;
+    private static final long TASK_1_ID = 1;
+    private static final long TASK_2_ID = 2;
+    private static final long TASK_3_ID = 3;
+    private static final long TASK_4_ID = 4;
     private TaskDao taskDao;
     private TodocDatabase db;
 
@@ -48,17 +58,67 @@ public class TaskDaoTest {
 
     @Test
     public void insertAndGetTasks() throws InterruptedException {
-//        //Given : We insert three projects then four tasks
-//        insertProject();
-//        insertTask();
-//
-//        //When: we get the list of tasks
-//        List<Task> tasks = LiveDataTestUtils.getOrAwaitValue(taskDao.getTasks());
-//
-//        List<Task> expectedTask = Arrays.asList(TASK_1, TASK_2, TASK_3, TASK_4);
-//
-//        //Then : The list contains four tasks
-//        assertTrue(tasks.equals(expectedTask));
+        //Given : We insert three projects then four tasks
+        insertProject();
+        insertTask();
+
+        //When: we get the list of tasks
+        List<Task> tasks = LiveDataTestUtils.getOrAwaitValue(taskDao.getTasks());
+
+        List<Task> expectedTask = Arrays.asList(TASK_1, TASK_2, TASK_3, TASK_4);
+
+        //Then : The list contains four tasks
+        assertEquals(tasks.size(), expectedTask.size());
+    }
+
+    @Test
+    public void insertTasksUpdateOneAndGetAll() throws InterruptedException {
+        //Given :
+        insertProject();
+        insertTask();
+        setTasksIds();
+
+        Task TASK_UPDATED = new Task(
+                TASK_1_ID,
+                TASK_1.getProjectId(),
+                "Task updated",
+                new Date().getTime()
+        );
+
+        taskDao.updateTask(TASK_UPDATED);
+
+        //When :
+        List<Task> tasks = LiveDataTestUtils.getOrAwaitValue(taskDao.getTasks());
+
+        //Then :
+        assertEquals(4, tasks.size());
+
+
+        assertEquals(TASK_UPDATED.getName(), tasks.get(FIRST_POSITION).getName());
+        assertEquals(TASK_2.getName(), tasks.get(SECOND_POSITION).getName());
+        assertEquals(TASK_3.getName(), tasks.get(THIRD_POSITION).getName());
+        assertEquals(TASK_4.getName(), tasks.get(FORTH_POSITION).getName());
+
+
+    }
+
+    @Test
+    public void insertAndDeleteOneTask() throws InterruptedException {
+        //Given :
+        insertProject();
+        insertTask();
+
+        taskDao.deleteTask(new Task(TASK_2_ID,TASK_2.getProjectId(),TASK_2_NAME,TASK_2_TIMESTAMP));
+
+        //When:
+        List<Task> tasks = LiveDataTestUtils.getOrAwaitValue(taskDao.getTasks());
+
+        //Then:
+        assertEquals(3, tasks.size());
+
+        assertEquals(TASK_1.getName(), tasks.get(FIRST_POSITION).getName());
+        assertEquals(TASK_3.getName(), tasks.get(SECOND_POSITION).getName());
+        assertEquals(TASK_4.getName(), tasks.get(THIRD_POSITION).getName());
     }
 
     private void insertProject() {
@@ -72,5 +132,12 @@ public class TaskDaoTest {
         taskDao.insertTask(TASK_2);
         taskDao.insertTask(TASK_3);
         taskDao.insertTask(TASK_4);
+    }
+    
+    private void setTasksIds(){
+        TASK_1.setId(TASK_1_ID);
+        TASK_2.setId(TASK_2_ID);
+        TASK_3.setId(TASK_3_ID);
+        TASK_4.setId(TASK_4_ID);
     }
 }

@@ -72,7 +72,7 @@ public class ProjectDaoTest {
         );
 
         //Then : the list of projects contains the three projects
-        assertTrue(projects.equals(expectedProjects));
+        assertTrue(projects.size() == expectedProjects.size());
     }
 
     private void insertProject() {

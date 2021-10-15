@@ -34,14 +34,21 @@ public class TasksAdapter extends RecyclerView.Adapter<TasksAdapter.TaskViewHold
     @NonNull
     private final DeleteTaskListener deleteTaskListener;
 
+    @NonNull
+    private final UpdateTaskListener updateTaskListener;
+
     /**
      * Instantiates a new TasksAdapter.
      *
      * @param tasks the list of tasks the adapter deals with to set
      */
-    TasksAdapter(@NonNull final List<Task> tasks, @NonNull final DeleteTaskListener deleteTaskListener) {
+    TasksAdapter(
+            @NonNull final List<Task> tasks,
+            @NonNull final DeleteTaskListener deleteTaskListener,
+            @NonNull final UpdateTaskListener updateTaskListener) {
         this.tasks = tasks;
         this.deleteTaskListener = deleteTaskListener;
+        this.updateTaskListener = updateTaskListener;
     }
 
     /**
@@ -58,7 +65,7 @@ public class TasksAdapter extends RecyclerView.Adapter<TasksAdapter.TaskViewHold
     @Override
     public TaskViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int viewType) {
         View view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.item_task, viewGroup, false);
-        return new TaskViewHolder(view, deleteTaskListener);
+        return new TaskViewHolder(view, deleteTaskListener, updateTaskListener);
     }
 
     @Override
@@ -81,6 +88,10 @@ public class TasksAdapter extends RecyclerView.Adapter<TasksAdapter.TaskViewHold
          * @param task the task that needs to be deleted
          */
         void onDeleteTask(Task task);
+    }
+
+    public interface UpdateTaskListener {
+        void onUpdateTask(Task task);
     }
 
     /**
@@ -114,29 +125,38 @@ public class TasksAdapter extends RecyclerView.Adapter<TasksAdapter.TaskViewHold
          */
         private final DeleteTaskListener deleteTaskListener;
 
+        private final UpdateTaskListener updateTaskListener;
+
         /**
          * Instantiates a new TaskViewHolder.
          *
          * @param itemView the view of the task item
          * @param deleteTaskListener the listener for when a task needs to be deleted to set
          */
-        TaskViewHolder(@NonNull View itemView, @NonNull DeleteTaskListener deleteTaskListener) {
+        TaskViewHolder(
+                @NonNull View itemView,
+                @NonNull DeleteTaskListener deleteTaskListener,
+                @NonNull UpdateTaskListener updateTaskListener) {
             super(itemView);
 
             this.deleteTaskListener = deleteTaskListener;
+            this.updateTaskListener = updateTaskListener;
 
             imgProject = itemView.findViewById(R.id.img_project);
             lblTaskName = itemView.findViewById(R.id.lbl_task_name);
             lblProjectName = itemView.findViewById(R.id.lbl_project_name);
             imgDelete = itemView.findViewById(R.id.img_delete);
 
-            imgDelete.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    final Object tag = view.getTag();
-                    if (tag instanceof Task) {
-                        TaskViewHolder.this.deleteTaskListener.onDeleteTask((Task) tag);
-                    }
+            imgDelete.setOnClickListener(view -> {
+                final Object tag = view.getTag();
+                if (tag instanceof Task) {
+                    TaskViewHolder.this.deleteTaskListener.onDeleteTask((Task) tag);
+                }
+            });
+            itemView.setOnClickListener(view -> {
+                final Object tag = view.getTag();
+                if (tag instanceof Task) {
+                    TaskViewHolder.this.updateTaskListener.onUpdateTask((Task) tag);
                 }
             });
         }
@@ -149,6 +169,7 @@ public class TasksAdapter extends RecyclerView.Adapter<TasksAdapter.TaskViewHold
         void bind(Task task) {
             lblTaskName.setText(task.getName());
             imgDelete.setTag(task);
+            itemView.setTag(task);
 
             final Project taskProject = task.getProject();
             if (taskProject != null) {

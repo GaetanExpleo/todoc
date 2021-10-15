@@ -27,6 +27,7 @@ import com.cleanup.todoc.model.Project;
 import com.cleanup.todoc.model.Task;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -37,7 +38,7 @@ import java.util.List;
  *
  * @author Gaëtan HERFRAY
  */
-public class MainActivity extends AppCompatActivity implements TasksAdapter.DeleteTaskListener {
+public class MainActivity extends AppCompatActivity implements TasksAdapter.DeleteTaskListener, TasksAdapter.UpdateTaskListener{
     /**
      * List of all projects available in the application
      */
@@ -52,7 +53,7 @@ public class MainActivity extends AppCompatActivity implements TasksAdapter.Dele
     /**
      * The adapter which handles the list of tasks
      */
-    private final TasksAdapter adapter = new TasksAdapter(tasks, this);
+    private final TasksAdapter adapter = new TasksAdapter(tasks, this, this);
 
     /**
      * The sort method to be used to display tasks
@@ -95,6 +96,7 @@ public class MainActivity extends AppCompatActivity implements TasksAdapter.Dele
     private TextView lblNoTasks;
 
     private TaskViewModel mTaskViewModel;
+    private Task taskToUpdate = null;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -142,6 +144,8 @@ public class MainActivity extends AppCompatActivity implements TasksAdapter.Dele
             sortMethod = SortMethod.OLD_FIRST;
         } else if (id == R.id.filter_recent_first) {
             sortMethod = SortMethod.RECENT_FIRST;
+        } else if (id == R.id.filter_project) {
+            sortMethod = SortMethod.PROJECT;
         }
 
         updateTasks();
@@ -153,6 +157,13 @@ public class MainActivity extends AppCompatActivity implements TasksAdapter.Dele
     public void onDeleteTask(Task task) {
         mTaskViewModel.deleteTask(task);
         updateTasks();
+    }
+
+
+    @Override
+    public void onUpdateTask(Task task) {
+        taskToUpdate = task;
+        showAddTaskDialog();
     }
 
     /**
@@ -175,13 +186,25 @@ public class MainActivity extends AppCompatActivity implements TasksAdapter.Dele
             // If a name has not been set
             if (taskName.trim().isEmpty()) {
                 dialogEditText.setError(getString(R.string.empty_task_name));
-            }
-            // If both project and name of the task have been set
-            else if (taskProject != null) {
+            } else if (taskProject != null) { // If both project and name of the task have been set
 
-                Task task = new Task(taskProject.getId(), taskName, new Date().getTime());
-                dialogEditText.setText("");
-                mTaskViewModel.createTask(task);
+                if (taskToUpdate == null) {
+                    Task task = new Task(taskProject.getId(), taskName, new Date().getTime());
+                    dialogEditText.setText("");
+                    mTaskViewModel.createTask(task);
+                } else {
+                    long taskId = taskToUpdate.getId();
+                    long timeStamp = taskToUpdate.getCreationTimestamp();
+                    long projectId = taskProject.getId();
+
+                    boolean taskModified = !(taskName.equals(taskToUpdate.getName())) ||
+                            !(projectId == taskToUpdate.getProject().getId());
+
+                    if (taskModified)
+                        mTaskViewModel.updateTask(new Task(taskId,projectId, taskName, timeStamp));
+
+                }
+
 
                 dialogInterface.dismiss();
             }
@@ -208,6 +231,10 @@ public class MainActivity extends AppCompatActivity implements TasksAdapter.Dele
         dialogSpinner = dialog.findViewById(R.id.project_spinner);
 
         populateDialogSpinner();
+        if (taskToUpdate != null) {
+            dialogEditText.setText(taskToUpdate.getName());
+            dialogSpinner.setSelection((int) taskToUpdate.getProjectId() - 1);
+        }
     }
 
     /**
@@ -233,7 +260,9 @@ public class MainActivity extends AppCompatActivity implements TasksAdapter.Dele
                 case OLD_FIRST:
                     Collections.sort(tasks, new Task.TaskOldComparator());
                     break;
-
+                case PROJECT:
+                    Collections.sort(tasks, new Task.TaskProjectComparator());
+                    break;
             }
             adapter.updateTasks(tasks);
         }
@@ -248,13 +277,22 @@ public class MainActivity extends AppCompatActivity implements TasksAdapter.Dele
     private AlertDialog getAddTaskDialog() {
         final AlertDialog.Builder alertBuilder = new AlertDialog.Builder(this, R.style.Dialog);
 
-        alertBuilder.setTitle(R.string.add_task);
         alertBuilder.setView(R.layout.dialog_add_task);
-        alertBuilder.setPositiveButton(R.string.add, null);
+
+        if (taskToUpdate == null) {
+            alertBuilder.setTitle(R.string.add_task);
+            alertBuilder.setPositiveButton(R.string.add, null);
+
+        } else {
+            alertBuilder.setTitle(R.string.update_task);
+            alertBuilder.setPositiveButton(R.string.update, null);
+        }
+
         alertBuilder.setOnDismissListener(dialogInterface -> {
             dialogEditText = null;
             dialogSpinner = null;
             dialog = null;
+            taskToUpdate = null;
         });
 
         dialog = alertBuilder.create();
@@ -300,6 +338,10 @@ public class MainActivity extends AppCompatActivity implements TasksAdapter.Dele
          * First created first
          */
         OLD_FIRST,
+        /**
+         * Sort by project
+         */
+        PROJECT,
         /**
          * No sort
          */
