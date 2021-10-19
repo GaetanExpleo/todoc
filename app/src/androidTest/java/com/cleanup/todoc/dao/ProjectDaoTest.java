@@ -22,6 +22,7 @@ import java.util.List;
 import static com.cleanup.todoc.dao.dataDaoTest.PROJECT_CIRCUS;
 import static com.cleanup.todoc.dao.dataDaoTest.PROJECT_LUCIDIA;
 import static com.cleanup.todoc.dao.dataDaoTest.PROJECT_TARTAMPION;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(AndroidJUnit4.class)
@@ -73,6 +74,9 @@ public class ProjectDaoTest {
 
         //Then : the list of projects contains the three projects
         assertTrue(projects.size() == expectedProjects.size());
+        assertEquals(projects.get(0).getName(), expectedProjects.get(1).getName());
+        assertEquals(projects.get(1).getName(), expectedProjects.get(0).getName());
+        assertEquals(projects.get(2).getName(), expectedProjects.get(2).getName());
     }
 
     private void insertProject() {

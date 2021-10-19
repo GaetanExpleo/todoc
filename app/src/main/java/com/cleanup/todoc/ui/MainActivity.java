@@ -21,10 +21,12 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.cleanup.todoc.R;
+import com.cleanup.todoc.falseTask;
 import com.cleanup.todoc.injection.Injection;
 import com.cleanup.todoc.injection.ViewModelFactory;
 import com.cleanup.todoc.model.Project;
 import com.cleanup.todoc.model.Task;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -110,7 +112,12 @@ public class MainActivity extends AppCompatActivity implements TasksAdapter.Dele
         listTasks.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         listTasks.setAdapter(adapter);
 
-        findViewById(R.id.fab_add_task).setOnClickListener(view -> showAddTaskDialog());
+        FloatingActionButton fab = findViewById(R.id.fab_add_task);
+        fab.setOnClickListener(view -> showAddTaskDialog());
+        fab.setOnLongClickListener(view -> {
+            falseTask.generateFalseTasks(MainActivity.this, MainActivity.this);
+            return true;
+        });
 
         configureViewModel();
         mTaskViewModel.getTasks().observe(this, tasks -> {

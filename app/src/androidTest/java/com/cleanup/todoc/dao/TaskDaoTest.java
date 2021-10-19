@@ -69,6 +69,10 @@ public class TaskDaoTest {
 
         //Then : The list contains four tasks
         assertEquals(tasks.size(), expectedTask.size());
+        assertEquals(tasks.get(0).getName(), TASK_1_NAME);
+        assertEquals(tasks.get(1).getName(), TASK_2_NAME);
+        assertEquals(tasks.get(2).getName(), TASK_3_NAME);
+        assertEquals(tasks.get(3).getName(), TASK_4_NAME);
     }
 
     @Test

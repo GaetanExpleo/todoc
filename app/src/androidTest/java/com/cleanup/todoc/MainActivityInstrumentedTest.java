@@ -1,24 +1,17 @@
 package com.cleanup.todoc;
 
-import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.widget.TextView;
 
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.room.Room;
 import androidx.test.core.app.ActivityScenario;
-import androidx.test.core.app.ApplicationProvider;
 import androidx.test.espresso.contrib.RecyclerViewActions;
 import androidx.test.espresso.matcher.RootMatchers;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.rule.ActivityTestRule;
 
-import com.cleanup.todoc.database.TodocDatabase;
-import com.cleanup.todoc.database.dao.TaskDao;
-import com.cleanup.todoc.model.Project;
-import com.cleanup.todoc.model.Task;
 import com.cleanup.todoc.ui.MainActivity;
 import com.cleanup.todoc.utils.DeleteViewAction;
 
@@ -30,8 +23,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import java.util.Date;
 
 import static androidx.test.espresso.Espresso.onData;
 import static androidx.test.espresso.Espresso.onView;
