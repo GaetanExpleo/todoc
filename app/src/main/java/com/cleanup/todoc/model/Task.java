@@ -10,6 +10,7 @@ import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * <p>Model for the tasks of the application.</p>
@@ -98,16 +99,6 @@ public class Task {
     }
 
     /**
-     * Returns the project associated to the task.
-     *
-     * @return the project associated to the task
-     */
-    @Nullable
-    public Project getProject() {
-        return Project.getProjectById(projectId);
-    }
-
-    /**
      * Returns the name of the task.
      *
      * @return the name of the task
@@ -137,6 +128,10 @@ public class Task {
      */
     private void setCreationTimestamp(long creationTimestamp) {
         this.creationTimestamp = creationTimestamp;
+    }
+
+    public Project getProject(List<Project> projects) {
+        return Project.getProjectById(projects, projectId);
     }
 
     /**

@@ -20,9 +20,19 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import static com.cleanup.todoc.dao.dataDaoTest.*;
+import static com.cleanup.todoc.dao.dataDaoTest.PROJECT_CIRCUS;
+import static com.cleanup.todoc.dao.dataDaoTest.PROJECT_LUCIDIA;
+import static com.cleanup.todoc.dao.dataDaoTest.PROJECT_TARTAMPION;
+import static com.cleanup.todoc.dao.dataDaoTest.TASK_1;
+import static com.cleanup.todoc.dao.dataDaoTest.TASK_1_NAME;
+import static com.cleanup.todoc.dao.dataDaoTest.TASK_2;
+import static com.cleanup.todoc.dao.dataDaoTest.TASK_2_NAME;
+import static com.cleanup.todoc.dao.dataDaoTest.TASK_2_TIMESTAMP;
+import static com.cleanup.todoc.dao.dataDaoTest.TASK_3;
+import static com.cleanup.todoc.dao.dataDaoTest.TASK_3_NAME;
+import static com.cleanup.todoc.dao.dataDaoTest.TASK_4;
+import static com.cleanup.todoc.dao.dataDaoTest.TASK_4_NAME;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 @RunWith(AndroidJUnit4.class)
 public class TaskDaoTest {
@@ -112,7 +122,7 @@ public class TaskDaoTest {
         insertProject();
         insertTask();
 
-        taskDao.deleteTask(new Task(TASK_2_ID,TASK_2.getProjectId(),TASK_2_NAME,TASK_2_TIMESTAMP));
+        taskDao.deleteTask(new Task(TASK_2_ID, TASK_2.getProjectId(), TASK_2_NAME, TASK_2_TIMESTAMP));
 
         //When:
         List<Task> tasks = LiveDataTestUtils.getOrAwaitValue(taskDao.getTasks());
@@ -137,8 +147,8 @@ public class TaskDaoTest {
         taskDao.insertTask(TASK_3);
         taskDao.insertTask(TASK_4);
     }
-    
-    private void setTasksIds(){
+
+    private void setTasksIds() {
         TASK_1.setId(TASK_1_ID);
         TASK_2.setId(TASK_2_ID);
         TASK_3.setId(TASK_3_ID);

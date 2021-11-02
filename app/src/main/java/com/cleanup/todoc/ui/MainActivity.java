@@ -44,7 +44,7 @@ public class MainActivity extends AppCompatActivity implements TasksAdapter.Dele
     /**
      * List of all projects available in the application
      */
-    private Project[] allProjects;
+    private List<Project> allProjects = new ArrayList<>();
 
     /**
      * List of all current tasks of the application
@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity implements TasksAdapter.Dele
     /**
      * The adapter which handles the list of tasks
      */
-    private final TasksAdapter adapter = new TasksAdapter(tasks, this, this);
+    private final TasksAdapter adapter = new TasksAdapter(tasks, allProjects, this, this);
 
     /**
      * The sort method to be used to display tasks
@@ -125,7 +125,11 @@ public class MainActivity extends AppCompatActivity implements TasksAdapter.Dele
             MainActivity.this.tasks.addAll(tasks);
             MainActivity.this.updateTasks();
         });
-        mTaskViewModel.getProjects().observe(this, projects -> allProjects = projects.toArray(new Project[0]));
+        mTaskViewModel.getProjects().observe(this, projects ->
+        {
+            allProjects.clear();
+            allProjects.addAll(projects);
+        });
     }
 
     private void configureViewModel() {
@@ -205,7 +209,7 @@ public class MainActivity extends AppCompatActivity implements TasksAdapter.Dele
                     long projectId = taskProject.getId();
 
                     boolean taskModified = !(taskName.equals(taskToUpdate.getName())) ||
-                            !(projectId == taskToUpdate.getProject().getId());
+                            !(projectId == taskToUpdate.getProject(allProjects).getId());
 
                     if (taskModified)
                         mTaskViewModel.updateTask(new Task(taskId,projectId, taskName, timeStamp));

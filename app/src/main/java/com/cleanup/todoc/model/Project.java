@@ -7,6 +7,11 @@ import androidx.annotation.Nullable;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
+import com.cleanup.todoc.database.dao.ProjectDao;
+import com.cleanup.todoc.repositories.ProjectRepository;
+
+import java.util.List;
+
 /**
  * <p>Models for project in which tasks are included.</p>
  *
@@ -32,6 +37,7 @@ public class Project {
     @ColorInt
     private final int color;
 
+
     /**
      * Instantiates a new Project.
      *
@@ -55,20 +61,6 @@ public class Project {
     }
 
     /**
-     * Returns all the projects of the application.
-     *
-     * @return all the projects of the application
-     */
-    @NonNull
-    public static Project[] getAllProjects() {
-        return new Project[]{
-                new Project(1L, "Projet Tartampion", 0xFFEADAD1),
-                new Project(2L, "Projet Lucidia", 0xFFB4CDBA),
-                new Project(3L, "Projet Circus", 0xFFA3CED2),
-        };
-    }
-
-    /**
      * Returns the project with the given unique identifier, or null if no project with that
      * identifier can be found.
      *
@@ -76,8 +68,8 @@ public class Project {
      * @return the project with the given unique identifier, or null if it has not been found
      */
     @Nullable
-    public static Project getProjectById(long id) {
-        for (Project project : getAllProjects()) {
+    public static Project getProjectById(List<Project> projects, long id) {
+        for (Project project : projects) {
             if (project.id == id)
                 return project;
         }
